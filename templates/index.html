@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mini Pokedex Aventurera</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <header class="hero">
+      <div class="hero__content">
+        <h1>Mini Pokedex Aventurera</h1>
+        <p>
+          Busca tu Pokemon favorito, descubre nuevas criaturas segun su tipo y
+          deja que la suerte te sorprenda con un nuevo amigo.
+        </p>
+      </div>
+      <img
+        src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png"
+        alt="Pokeball"
+        class="hero__pokeball"
+      />
+    </header>
+
+    <main class="layout">
+      <section class="card search-card">
+        <h2>Busca por nombre o numero</h2>
+        <form id="search-form" class="search-form">
+          <input
+            type="text"
+            id="search-input"
+            placeholder="Ejemplo: pikachu o 25"
+            autocomplete="off"
+          />
+          <button type="submit" class="btn primary">Buscar</button>
+        </form>
+        <button id="random-button" class="btn secondary">Sorpresa!</button>
+      </section>
+
+      <section class="card type-card">
+        <h2>Explora por tipo</h2>
+        <label class="type-label" for="type-select">
+          Elige un tipo elemental para ver una mini lista de Pokemon.
+        </label>
+        <select id="type-select">
+          <option value="" selected>Elige un tipo</option>
+          <option value="fire">Fuego</option>
+          <option value="water">Agua</option>
+          <option value="grass">Planta</option>
+          <option value="electric">Electrico</option>
+          <option value="fairy">Hada</option>
+          <option value="dragon">Dragon</option>
+          <option value="ghost">Fantasma</option>
+          <option value="rock">Roca</option>
+          <option value="ice">Hielo</option>
+          <option value="psychic">Psiquico</option>
+        </select>
+        <div id="type-results" class="type-results"></div>
+      </section>
+
+      <section class="card compare-card">
+        <h2>Duelo de estadísticas</h2>
+        <p class="compare-intro">
+          Escribe dos Pokémon para ver cuál tiene la suma de estadísticas más alta.
+        </p>
+        <form id="compare-form" class="compare-form">
+          <input
+            type="text"
+            id="compare-a"
+            placeholder="Ejemplo: bulbasaur"
+            autocomplete="off"
+          />
+          <span class="compare-versus">VS</span>
+          <input
+            type="text"
+            id="compare-b"
+            placeholder="Ejemplo: charmander"
+            autocomplete="off"
+          />
+          <button type="submit" class="btn primary">Comparar</button>
+        </form>
+        <div id="compare-message" class="message"></div>
+        <div id="compare-results" class="compare-results" hidden>
+          <div class="compare-results__header">
+            <h3 id="compare-winner"></h3>
+            <p id="compare-summary"></p>
+          </div>
+          <div class="compare-results__cards">
+            <article class="mini-card" id="compare-card-a">
+              <img id="compare-a-image" alt="" />
+              <h4 id="compare-a-name"></h4>
+              <p class="mini-card__total">
+                <span>Total de estadísticas:</span>
+                <strong id="compare-a-total"></strong>
+              </p>
+              <ul id="compare-a-stats" class="mini-card__stats"></ul>
+            </article>
+            <article class="mini-card" id="compare-card-b">
+              <img id="compare-b-image" alt="" />
+              <h4 id="compare-b-name"></h4>
+              <p class="mini-card__total">
+                <span>Total de estadísticas:</span>
+                <strong id="compare-b-total"></strong>
+              </p>
+              <ul id="compare-b-stats" class="mini-card__stats"></ul>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="card result-card" id="result-card">
+        <h2>Ficha de tu nuevo amigo</h2>
+        <div id="message" class="message"></div>
+        <div class="pokemon-card" id="pokemon-card" hidden>
+          <div class="pokemon-card__header">
+            <img id="pokemon-image" alt="Ilustracion del Pokemon" />
+            <div>
+              <h3 id="pokemon-name"></h3>
+              <p id="pokemon-description"></p>
+            </div>
+          </div>
+          <div class="pokemon-card__info">
+            <div class="info-pill">
+              <span class="label">Numero</span>
+              <span id="pokemon-id"></span>
+            </div>
+            <div class="info-pill">
+              <span class="label">Altura</span>
+              <span id="pokemon-height"></span>
+            </div>
+            <div class="info-pill">
+              <span class="label">Peso</span>
+              <span id="pokemon-weight"></span>
+            </div>
+          </div>
+          <div class="pokemon-card__tags">
+            <h4>Tipos</h4>
+            <div id="pokemon-types" class="tag-list"></div>
+          </div>
+          <div class="pokemon-card__tags">
+            <h4>Habilidades</h4>
+            <div id="pokemon-abilities" class="tag-list"></div>
+          </div>
+          <div class="pokemon-card__stats">
+            <h4>Estadisticas basicas</h4>
+            <ul id="pokemon-stats" class="stats-list"></ul>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <p>
+        Datos proporcionados por
+        <a href="https://pokeapi.co/" target="_blank" rel="noopener">PokeAPI</a>.
+      </p>
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
+  </body>
+</html>
