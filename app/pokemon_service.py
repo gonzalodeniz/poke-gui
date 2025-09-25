@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 import random
-from typing import List
+from typing import Dict, List
 
 from .exceptions import PokeAPIError, PokemonNotFoundError
 from .models import Pokemon, PokemonSummary
 from .pokeapi_client import PokeAPIClient
+from .regions import PokemonRegions, RegionInfo
 
 
 class PokemonService:
@@ -41,6 +42,34 @@ class PokemonService:
             )
             summaries.append(summary)
         return summaries
+
+    def get_regions_catalogue(self) -> List[dict]:
+        regions: List[RegionInfo] = PokemonRegions.all()
+        return [self._region_to_dict(region, include_featured=True) for region in regions]
+
+    def get_region_details(self, region_key: str, limit: int = 12) -> dict:
+        try:
+            region = PokemonRegions.get(region_key)
+        except KeyError as exc:
+            raise ValueError("¡Esa región aún no está en el mapa!") from exc
+
+        pokedex_data = self.client.get_pokedex(region.pokedex)
+        entries = pokedex_data.get("pokemon_entries", [])
+
+        summaries: List[PokemonSummary] = []
+        for entry in entries[:limit]:
+            species = entry.get("pokemon_species", {})
+            summary = PokemonSummary.from_url(
+                name=species.get("name", ""),
+                url=species.get("url", ""),
+            )
+            summaries.append(summary)
+
+        return {
+            "region": self._region_to_dict(region, include_featured=True),
+            "pokemon": [summary.to_dict() for summary in summaries],
+            "total_available": len(entries),
+        }
 
     def compare_pokemon(self, identifier_a: str | int, identifier_b: str | int) -> dict:
         first_key = str(identifier_a).strip().lower()
@@ -99,3 +128,15 @@ class PokemonService:
     def _clean_description(text: str) -> str:
         cleaned = text.replace("\n", " ").replace("\f", " ")
         return " ".join(cleaned.split())
+
+    @staticmethod
+    def _region_to_dict(region: RegionInfo, *, include_featured: bool = False) -> Dict[str, object]:
+        payload: Dict[str, object] = {
+            "key": region.key,
+            "name": region.name,
+            "description": region.description,
+            "map_image": region.map_image,
+        }
+        if include_featured:
+            payload["featured"] = region.featured
+        return payload

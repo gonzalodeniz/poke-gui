@@ -29,6 +29,14 @@ class PokemonController:
         self.blueprint.add_url_rule(
             "/api/pokemon/compare", view_func=self.compare_pokemon, methods=["GET"]
         )
+        self.blueprint.add_url_rule(
+            "/api/regions", view_func=self.regions_catalogue, methods=["GET"]
+        )
+        self.blueprint.add_url_rule(
+            "/api/regions/<string:region_key>",
+            view_func=self.region_details,
+            methods=["GET"],
+        )
 
     def home(self):
         return render_template("index.html")
@@ -84,3 +92,24 @@ class PokemonController:
             return jsonify({"error": str(exc)}), 502
 
         return jsonify(result)
+
+    def regions_catalogue(self):
+        regions = self.service.get_regions_catalogue()
+        return jsonify({"regions": regions})
+
+    def region_details(self, region_key: str):
+        try:
+            limit = int(request.args.get("limit", 12))
+        except ValueError:
+            limit = 12
+
+        try:
+            payload = self.service.get_region_details(region_key, limit=limit)
+        except ValueError as exc:
+            return jsonify({"error": str(exc)}), 400
+        except PokemonNotFoundError as exc:
+            return jsonify({"error": str(exc)}), 404
+        except PokeAPIError as exc:
+            return jsonify({"error": str(exc)}), 502
+
+        return jsonify(payload)

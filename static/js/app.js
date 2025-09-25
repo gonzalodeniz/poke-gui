@@ -21,6 +21,13 @@ const compareMessage = document.getElementById('compare-message');
 const compareResultsBox = document.getElementById('compare-results');
 const compareWinner = document.getElementById('compare-winner');
 const compareSummary = document.getElementById('compare-summary');
+const regionSelect = document.getElementById('region-select');
+const regionTravelButton = document.getElementById('region-travel');
+const regionMap = document.getElementById('region-map');
+const regionIcons = document.getElementById('region-icons');
+const regionDescription = document.getElementById('region-description');
+const regionMessage = document.getElementById('region-explorer-message');
+const regionPokemonList = document.getElementById('region-pokemon');
 
 const compareElements = {
   a: {
@@ -38,6 +45,9 @@ const compareElements = {
     stats: document.getElementById('compare-b-stats'),
   },
 };
+
+let regionsCatalogue = [];
+let currentRegionKey = '';
 
 if (searchForm) {
   searchForm.addEventListener('submit', async (event) => {
@@ -72,7 +82,7 @@ if (typeSelect) {
       if (!response.ok) {
         throw new Error(payload.error || 'Ocurrio un problema al cargar el tipo.');
       }
-      renderTypeResults(payload.pokemon, payload.type);
+      renderTypeResults(payload.pokemon);
     } catch (error) {
       renderTypeError(error.message);
     }
@@ -82,8 +92,8 @@ if (typeSelect) {
 if (compareForm) {
   compareForm.addEventListener('submit', async (event) => {
     event.preventDefault();
-    const first = compareAInput.value.trim();
-    const second = compareBInput.value.trim();
+    const first = (compareAInput?.value || '').trim();
+    const second = (compareBInput?.value || '').trim();
 
     if (!first || !second) {
       showCompareMessage('Necesitamos dos Pokémon para comparar.');
@@ -113,6 +123,32 @@ if (compareForm) {
     }
   });
 }
+
+if (regionSelect) {
+  regionSelect.addEventListener('change', async (event) => {
+    const value = event.target.value;
+    if (!value) {
+      return;
+    }
+    await loadRegion(value);
+  });
+}
+
+if (regionTravelButton) {
+  regionTravelButton.addEventListener('click', async () => {
+    if (!regionsCatalogue.length) {
+      await initRegionExplorer();
+      return;
+    }
+    const randomRegion = chooseRandomRegionKey();
+    if (randomRegion) {
+      await loadRegion(randomRegion, { announce: '¡Has viajado a una nueva región!' });
+    }
+  });
+}
+
+initRegionExplorer();
+loadPokemon('/api/pokemon/random');
 
 async function loadPokemon(endpoint) {
   showMessage('Cargando tu Pokemon...');
@@ -155,6 +191,7 @@ function renderPokemon(data) {
 }
 
 function renderTagList(container, items) {
+  if (!container) return;
   container.innerHTML = '';
   (items || []).forEach((item) => {
     const span = document.createElement('span');
@@ -164,7 +201,9 @@ function renderTagList(container, items) {
 }
 
 function showMessage(text) {
-  messageBox.textContent = text;
+  if (messageBox) {
+    messageBox.textContent = text;
+  }
 }
 
 function showCompareMessage(text) {
@@ -249,5 +288,143 @@ function renderMiniCard(data, slot, result) {
   elements.card.classList.toggle('mini-card--winner', isWinner);
 }
 
-// Carga inicial con un Pokemon al azar para animar a explorar.
-loadPokemon('/api/pokemon/random');
+async function initRegionExplorer() {
+  if (!regionSelect || !regionMap) {
+    return;
+  }
+
+  if (regionsCatalogue.length) {
+    return;
+  }
+
+  showRegionMessage('Cargando el mapa del mundo Pokémon...');
+  try {
+    const catalogue = await fetchRegionsCatalogue();
+    regionsCatalogue = catalogue;
+    populateRegionSelect(catalogue);
+    const initial = catalogue[0]?.key;
+    if (initial) {
+      await loadRegion(initial, { announce: '¡Bienvenido al modo explorador!' });
+    }
+  } catch (error) {
+    showRegionMessage(error.message || 'No pudimos cargar las regiones.');
+  }
+}
+
+async function fetchRegionsCatalogue() {
+  const response = await fetch('/api/regions');
+  const payload = await response.json();
+  if (!response.ok) {
+    throw new Error(payload.error || 'No pudimos conseguir el mapa de regiones.');
+  }
+  return payload.regions || [];
+}
+
+function populateRegionSelect(catalogue) {
+  if (!regionSelect) return;
+  regionSelect.innerHTML = '<option value="">Selecciona una región</option>';
+  catalogue.forEach((region) => {
+    const option = document.createElement('option');
+    option.value = region.key;
+    option.textContent = region.name;
+    regionSelect.appendChild(option);
+  });
+}
+
+async function loadRegion(regionKey, options = {}) {
+  if (!regionKey) {
+    return;
+  }
+  showRegionMessage('Preparando la mochila para viajar...');
+  try {
+    const response = await fetch(`/api/regions/${regionKey}?limit=12`);
+    const payload = await response.json();
+    if (!response.ok) {
+      throw new Error(payload.error || 'No pudimos visitar esa región.');
+    }
+    renderRegion(payload, options.announce);
+    showRegionMessage('');
+  } catch (error) {
+    showRegionMessage(error.message || 'Hubo un problema al explorar la región.');
+  }
+}
+
+function renderRegion(payload, announcement) {
+  if (!payload || !payload.region) {
+    throw new Error('Respuesta inesperada al cargar la región.');
+  }
+  const { region, pokemon } = payload;
+  currentRegionKey = region.key;
+
+  if (regionSelect) {
+    regionSelect.value = region.key;
+  }
+
+  if (announcement) {
+    showRegionMessage(announcement);
+    setTimeout(() => showRegionMessage(''), 2000);
+  }
+
+  if (regionDescription) {
+    regionDescription.textContent = region.description || '';
+  }
+
+  if (regionMap) {
+    if (region.map_image) {
+      regionMap.style.backgroundImage = `linear-gradient(135deg, rgba(85, 214, 255, 0.35), rgba(255, 205, 0, 0.25)), url(${region.map_image})`;
+      regionMap.style.backgroundSize = 'cover';
+      regionMap.style.backgroundPosition = 'center';
+    } else {
+      regionMap.style.backgroundImage = '';
+    }
+  }
+
+  if (regionIcons) {
+    regionIcons.innerHTML = '';
+    (region.featured || []).forEach((id) => {
+      const img = document.createElement('img');
+      img.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${id}.png`;
+      img.alt = `Habitante típico de ${region.name}`;
+      regionIcons.appendChild(img);
+    });
+  }
+
+  renderRegionPokemon(pokemon || []);
+}
+
+function renderRegionPokemon(list) {
+  if (!regionPokemonList) {
+    return;
+  }
+  regionPokemonList.innerHTML = '';
+  if (!Array.isArray(list) || !list.length) {
+    regionPokemonList.innerHTML = '<p class="empty">Aún no hay Pokémon registrados en esta región.</p>';
+    return;
+  }
+
+  list.forEach((item) => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.innerHTML = `<span>#${String(item.id).padStart(3, '0')}</span><span>${item.name}</span>`;
+    button.addEventListener('click', () => {
+      loadPokemon(`/api/pokemon?q=${encodeURIComponent(item.id)}`);
+    });
+    regionPokemonList.appendChild(button);
+  });
+}
+
+function showRegionMessage(text) {
+  if (regionMessage) {
+    regionMessage.textContent = text;
+  }
+}
+
+function chooseRandomRegionKey() {
+  if (!regionsCatalogue.length) {
+    return '';
+  }
+  const available = regionsCatalogue.filter((region) => region.key !== currentRegionKey);
+  const pool = available.length ? available : regionsCatalogue;
+  const randomIndex = Math.floor(Math.random() * pool.length);
+  return pool[randomIndex].key;
+}

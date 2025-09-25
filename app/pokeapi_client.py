@@ -45,3 +45,6 @@ class PokeAPIClient:
 
     def get_type(self, type_name: str) -> dict:
         return self._get(f"type/{type_name}")
+
+    def get_pokedex(self, pokedex_name: str) -> dict:
+        return self._get(f"pokedex/{pokedex_name}")

@@ -7,6 +7,7 @@ Aplicación web pensada para niños y niñas que quieran descubrir información 
 - Descubrimiento de Pokémon por tipo elemental con lista rápida.
 - Botón sorpresa para mostrar un Pokémon aleatorio.
 - Comparador de dos Pokémon que elige al ganador según las estadísticas totales.
+- Modo explorador de regiones con mapas ilustrados e interacciones para viajar entre zonas.
 - Tarjetas coloridas con descripción, tipos, habilidades y estadísticas básicas.
 - Arquitectura orientada a objetos con clases para cliente, servicio, modelos y controlador.
 - Conjunto de pruebas unitarias con `pytest` que cubren todas las clases.

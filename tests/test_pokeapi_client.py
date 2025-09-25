@@ -74,3 +74,14 @@ def test_get_pokemon_raises_error_on_network_issue():
 
     with pytest.raises(PokeAPIError):
         client.get_pokemon("pikachu")
+
+
+def test_get_pokedex_fetches_entries():
+    payload = {"pokemon_entries": []}
+    session = DummySession(response=DummyResponse(200, payload, ok=True))
+    client = PokeAPIClient(session=session)
+
+    result = client.get_pokedex("kanto")
+
+    assert result == payload
+    assert session.calls[0].url.endswith("pokedex/kanto")

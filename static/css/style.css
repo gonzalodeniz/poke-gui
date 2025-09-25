@@ -160,6 +160,102 @@ body {
   transform: translateY(-2px);
 }
 
+.region-card {
+  display: grid;
+  gap: 1rem;
+}
+
+.region-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.region-intro {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.region-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.region-controls label {
+  font-weight: 600;
+}
+
+.region-controls select {
+  flex: 1 1 200px;
+  padding: 0.7rem 1rem;
+  border-radius: 16px;
+  border: 2px solid rgba(0, 0, 0, 0.15);
+  font-size: 1rem;
+}
+
+.region-map {
+  position: relative;
+  min-height: 180px;
+  border-radius: 24px;
+  background: linear-gradient(135deg, rgba(85, 214, 255, 0.35), rgba(255, 205, 0, 0.3));
+  overflow: hidden;
+  border: 3px dashed rgba(75, 42, 255, 0.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.region-icons {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  padding: 1.5rem;
+}
+
+.region-icons img {
+  width: 72px;
+  height: 72px;
+  object-fit: contain;
+  background: rgba(255, 255, 255, 0.75);
+  border-radius: 18px;
+  padding: 0.5rem;
+  box-shadow: 0 12px 20px rgba(85, 214, 255, 0.25);
+}
+
+.region-description {
+  margin: 0;
+  font-weight: 600;
+}
+
+.region-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 0.75rem;
+}
+
+.region-list button {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.35rem;
+  padding: 0.85rem 1rem;
+  border-radius: 18px;
+  border: 2px solid rgba(75, 42, 255, 0.18);
+  background: rgba(169, 140, 255, 0.18);
+  cursor: pointer;
+  transition: transform 0.2s ease, background 0.2s ease;
+  font-weight: 600;
+}
+
+.region-list button:hover {
+  transform: translateY(-3px);
+  background: rgba(169, 140, 255, 0.35);
+}
+
 .compare-card {
   position: relative;
 }

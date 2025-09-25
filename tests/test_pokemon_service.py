@@ -14,6 +14,8 @@ class FakeClient:
         self._type_payload = type_payload or {"pokemon": []}
         self.requested_ids = []
         self.pokemon_overrides = {}
+        self.pokedex_payloads = {}
+        self.last_pokedex = None
 
     def get_pokemon(self, identifier):
         self.requested_ids.append(identifier)
@@ -29,6 +31,10 @@ class FakeClient:
         if self._type_payload is None:
             raise PokemonNotFoundError("No type")
         return self._type_payload
+
+    def get_pokedex(self, pokedex_name):
+        self.last_pokedex = pokedex_name
+        return self.pokedex_payloads.get(pokedex_name, {"pokemon_entries": []})
 
 
 class FixedRandom:
@@ -191,3 +197,59 @@ def test_compare_pokemon_requires_distinct_entries(sample_species_payload):
 
     with pytest.raises(ValueError):
         service.compare_pokemon("pikachu", "pikachu")
+
+
+def test_get_regions_catalogue_returns_metadata():
+    client = FakeClient()
+    service = PokemonService(client=client)
+
+    regions = service.get_regions_catalogue()
+
+    assert isinstance(regions, list)
+    assert any(region["key"] == "kanto" for region in regions)
+    assert "featured" in regions[0]
+
+
+def test_get_region_details_returns_summaries():
+    client = FakeClient()
+    client.pokedex_payloads = {
+        "kanto": {
+            "pokemon_entries": [
+                {
+                    "pokemon_species": {
+                        "name": "bulbasaur",
+                        "url": "https://pokeapi.co/api/v2/pokemon-species/1/",
+                    }
+                },
+                {
+                    "pokemon_species": {
+                        "name": "charmander",
+                        "url": "https://pokeapi.co/api/v2/pokemon-species/4/",
+                    }
+                },
+                {
+                    "pokemon_species": {
+                        "name": "squirtle",
+                        "url": "https://pokeapi.co/api/v2/pokemon-species/7/",
+                    }
+                },
+            ]
+        }
+    }
+    service = PokemonService(client=client)
+
+    details = service.get_region_details("kanto", limit=2)
+
+    assert details["region"]["name"] == "Kanto"
+    assert len(details["pokemon"]) == 2
+    assert details["pokemon"][0]["name"] == "Bulbasaur"
+    assert details["total_available"] == 3
+    assert client.last_pokedex == "kanto"
+
+
+def test_get_region_details_invalid_region():
+    client = FakeClient()
+    service = PokemonService(client=client)
+
+    with pytest.raises(ValueError):
+        service.get_region_details("ultra-space")

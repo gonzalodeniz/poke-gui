@@ -47,15 +47,33 @@ class ServiceStub:
         self.raise_on_random = None
         self.raise_on_type = None
         self.raise_on_compare = None
+        self.raise_on_region_details = None
         self.last_query = None
         self.last_type = None
         self.last_compare = None
+        self.last_region_request = None
         self.compare_payload = {
             "winner": "Pikachu",
             "is_tie": False,
             "message": "¡Pikachu gana la batalla de estadísticas!",
             "difference": 50,
             "pokemon": [self.pokemon_payload, self.random_payload],
+        }
+        self.region_catalogue = [
+            {
+                "key": "kanto",
+                "name": "Kanto",
+                "description": "Región de inicio",
+                "map_image": "http://example.com/map.png",
+                "featured": [25, 1, 4],
+            }
+        ]
+        self.region_detail_payloads = {
+            "kanto": {
+                "region": self.region_catalogue[0],
+                "pokemon": [{"id": 25, "name": "Pikachu"}],
+                "total_available": 1,
+            }
         }
 
     def get_pokemon(self, identifier):
@@ -80,6 +98,17 @@ class ServiceStub:
         if self.raise_on_compare:
             raise self.raise_on_compare
         return self.compare_payload
+
+    def get_regions_catalogue(self):
+        return self.region_catalogue
+
+    def get_region_details(self, region_key, limit=12):
+        self.last_region_request = (region_key, limit)
+        if self.raise_on_region_details:
+            raise self.raise_on_region_details
+        if region_key not in self.region_detail_payloads:
+            raise ValueError("Región desconocida")
+        return self.region_detail_payloads[region_key]
 
 
 @pytest.fixture
@@ -221,4 +250,47 @@ def test_compare_endpoint_handles_api_error(flask_client):
     response = client.get(
         "/api/pokemon/compare", query_string={"a": "pikachu", "b": "mew"}
     )
+    assert response.status_code == 502
+
+
+def test_regions_catalogue_endpoint(flask_client):
+    client, service = flask_client
+    response = client.get("/api/regions")
+    data = response.get_json()
+
+    assert response.status_code == 200
+    assert len(data["regions"]) == len(service.region_catalogue)
+
+
+def test_region_details_endpoint(flask_client):
+    client, service = flask_client
+    response = client.get("/api/regions/kanto")
+    data = response.get_json()
+
+    assert response.status_code == 200
+    assert data["region"]["key"] == "kanto"
+    assert service.last_region_request == ("kanto", 12)
+
+
+def test_region_details_endpoint_handles_value_error(flask_client):
+    client, service = flask_client
+    service.raise_on_region_details = ValueError("no existe")
+
+    response = client.get("/api/regions/kalos")
+    assert response.status_code == 400
+
+
+def test_region_details_endpoint_handles_not_found(flask_client):
+    client, service = flask_client
+    service.raise_on_region_details = PokemonNotFoundError("sin datos")
+
+    response = client.get("/api/regions/kalos")
+    assert response.status_code == 404
+
+
+def test_region_details_endpoint_handles_api_error(flask_client):
+    client, service = flask_client
+    service.raise_on_region_details = PokeAPIError("fallo red")
+
+    response = client.get("/api/regions/kalos")
     assert response.status_code == 502
