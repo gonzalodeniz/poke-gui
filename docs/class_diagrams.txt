@@ -1,0 +1,147 @@
+========================================
+POKEMON KIDS APP - DIAGRAMAS DE CLASE EN ASCII
+========================================
+
+Leyenda rápida
+--------------
+* "<>" indica una relación de agregación/composición.
+* "-->" indica dependencia o uso de una clase por otra.
+* "..>" indica una relación estática (acceso a miembros de clase).
+
+1) Modelos de dominio
+---------------------
+
++-------------------+
+| PokemonStat       |
+|-------------------|
+| + name: str       |
+| + value: int      |
+|-------------------|
+| + from_api(data)  |
+| + to_dict()       |
++-------------------+
+          ^ 1..*
+          |
++-------------------+        <>----------+
+| Pokemon           |<-------------------|
+|-------------------|                    |
+| + identifier: int |                    |
+| + name: str       |                    |
+| + description: str|                    |
+| + height_m: float |                    |
+| + weight_kg: float|                    |
+| + types: List[str]|                    |
+| + abilities: List[str]                 |
+| + stats: List[PokemonStat]             |
+| + image_url: str  |                    |
+|-------------------|                    |
+| + from_api(...)   |                    |
+| + to_dict()       |                    |
+| + total_stats     |(propiedad)         |
++-------------------+                    |
+                                          |
+                                          |
++-------------------+                     |
+| PokemonSummary    |---------------------+
+|-------------------|
+| + identifier: int |
+| + name: str       |
+|-------------------|
+| + from_url(...)   |
+| + to_dict()       |
++-------------------+
+
+Relaciones de los modelos:
+- Pokemon agrega (1..*) PokemonStat.
+- PokemonService produce instancias de Pokemon y PokemonSummary.
+
+2) Servicios y controladores
+-----------------------------
+
++--------------------------+
+| PokeAPIClient            |
+|--------------------------|
+| + BASE_URL: str          |
+| + MAX_POKEMON_ID: int    |
+| + session: requests.Session |
+| + timeout: int           |
+|--------------------------|
+| + get_pokemon(id)        |
+| + get_pokemon_species(id)|
+| + get_type(name)         |
+| + get_pokedex(name)      |
++--------------------------+
+             ^
+             | 1
+             |
++--------------------------+     uses      +-------------------------+
+| PokemonService           |-------------> | Pokemon                 |
+|--------------------------|               | PokemonStat             |
+| + client: PokeAPIClient  |               | PokemonSummary          |
+| + rng: random.Random     |               +-------------------------+
+|--------------------------|
+| + get_pokemon(id)        |
+| + get_random_pokemon()   |
+| + get_pokemon_by_type()  |
+| + compare_pokemon(a,b)   |
+| + get_regions_catalogue()|
+| + get_region_details()   |
++--------------------------+
+             ^
+             |
+             |
++--------------------------+
+| PokemonController        |
+|--------------------------|
+| + service: PokemonService|
+| + blueprint: Blueprint   |
+|--------------------------|
+| + home()                 |
+| + search_pokemon()       |
+| + random_pokemon()       |
+| + pokemon_by_type()      |
+| + compare_pokemon()      |
+| + regions_catalogue()    |
+| + region_details()       |
++--------------------------+
+
+Relaciones clave:
+- PokemonController depende de PokemonService para atender cada ruta.
+- PokemonService delega todas las llamadas HTTP en PokeAPIClient.
+
+3) Información de regiones y apoyo estático
+-------------------------------------------
+
++---------------------------+
+| RegionInfo                |
+|---------------------------|
+| + key: str                |
+| + name: str               |
+| + pokedex: str            |
+| + description: str        |
+| + map_image: str          |
+| + featured: List[int]     |
++---------------------------+
+
++---------------------------+
+| PokemonRegions            |
+|---------------------------|
+| - _REGIONS: Dict[str,...] |
+|---------------------------|
+| + all() -> List[RegionInfo] |
+| + get(key) -> RegionInfo    |
++---------------------------+
+
+Relaciones:
+- PokemonService ..> PokemonRegions (usa métodos de clase para obtener metadatos).
+- PokemonRegions contiene múltiples RegionInfo en un catálogo estático.
+
+Diagrama resumido de dependencias principales
+---------------------------------------------
+
+PokemonController --> PokemonService --> PokeAPIClient
+                            |
+                            +--> Pokemon / PokemonStat / PokemonSummary
+                            +--> PokemonRegions ..> RegionInfo
+
+Fin del documento.
