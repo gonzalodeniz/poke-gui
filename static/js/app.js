@@ -343,7 +343,9 @@ async function loadRegion(regionKey, options = {}) {
       throw new Error(payload.error || 'No pudimos visitar esa región.');
     }
     renderRegion(payload, options.announce);
-    showRegionMessage('');
+    if (!options.announce) {
+      showRegionMessage('');
+    }
   } catch (error) {
     showRegionMessage(error.message || 'Hubo un problema al explorar la región.');
   }
