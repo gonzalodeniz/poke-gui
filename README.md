@@ -34,11 +34,46 @@ Aplicación web pensada para niños y niñas que quieran descubrir información 
    ```
 5. Abre tu navegador y visita `http://localhost:5000` para explorar la mini Pokédex.
 
+## Preparar el entorno de pruebas
+1. Asegúrate de tener Python 3.10+, pip y Node.js (con npm).  
+2. Ejecuta el script de preparación (instala dependencias Python y JavaScript, y garantiza la estructura de tests):
+   ```bash
+   chmod +x setup_tests.sh
+   ./setup_tests.sh
+   ```
+   - Si tu entorno no tiene `npm`, instálalo antes de volver a ejecutar el script.
+
 ## Ejecutar pruebas
-Con el entorno virtual activo:
+Puedes ejecutar cada suite por separado o lanzar todas de una sola vez.
+
+### Pruebas unitarias (servicio/modelos)
 ```bash
-pytest
+pytest tests/test_models.py tests/test_pokeapi_client.py tests/test_pokemon_service.py tests/test_critical_features.py
 ```
+
+### Pruebas de integración (rutas y controller)
+```bash
+pytest tests/test_routes.py tests/test_integration_api.py
+```
+
+### Pruebas de interfaz (E2E con Cypress)
+1. Asegúrate de que la app Flask esté corriendo en `http://localhost:5000`:
+   ```bash
+   python run.py
+   ```
+2. En otra terminal:
+   ```bash
+   npx cypress run --e2e
+   # o npx cypress open --e2e para modo interactivo
+   ```
+
+### Ejecutar todo automáticamente
+Se incluye un script que orquesta las tres suites, levantando el servidor para Cypress de forma temporal:
+```bash
+chmod +x run_all_tests.sh
+./run_all_tests.sh
+```
+El script muestra un resumen final indicando qué bloque (unitarias, integración, interfaz) pasó o falló.
 
 ## Estructura del proyecto
 ```
